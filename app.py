@@ -3,7 +3,6 @@ from threading import Thread
 import Servo
 import websocket
 import netifaces as ni
-import time
 import json
 import pprint
 
@@ -15,18 +14,20 @@ try:
 except ImportError:
     import _thread as thread
 
-def on_message(ws, message):
 
+def on_message(ws, message):
     pp.pprint(message)
 
     _message = json.loads(message)
-    
+
     event = _message['d']['event']
-    
+
     if event == 'start_servo':
         print(1)
-        t = Thread(target=servo.activate(),daemon=True)
+        t = Thread(target=activate_servo(), daemon=True)
         t.start()
+
+
 #    try:
 #
 #        _message = json.loads(message)
@@ -45,13 +46,24 @@ def on_message(ws, message):
 def on_error(ws, error):
     print(error)
 
+
 def on_close(ws):
     print("### closed ###")
+
 
 def on_open(ws):
     def run():
         ws.send('{"t":1,"d":{"topic":"servo"}}')
+
     Thread(target=run).start()
+
+
+def activate_servo():
+    servo.activate()
+    while servo.is_active():
+        ws.send('{"t":7,"d":{"topic":"servo","event":"message","data":' + str(servo.is_active()) + '}}')
+        pp.pprint(str(servo.is_active()))
+
 
 if __name__ == "__main__":
 
@@ -60,10 +72,7 @@ if __name__ == "__main__":
     pp.pprint(ip)
     websocket.enableTrace(True)
     ws_server_url = f'ws://{ip}:3333/adonis-ws'
-    ws = websocket.WebSocketApp(ws_server_url,
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
+    ws = websocket.WebSocketApp(ws_server_url, on_message=on_message, on_error=on_error, on_close=on_close)
 
     try:
         while True:

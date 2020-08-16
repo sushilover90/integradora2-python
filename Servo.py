@@ -1,15 +1,16 @@
 import RPi.GPIO as GPIO
 from time import sleep
 
+
 class Servo:
 
-
+    active = False
     pwm = None
 
     def __init__(self):
         return
-    
-    def setAngle(self,angle):
+
+    def set_angle(self, angle):
         duty = angle / (10 + 2)
         GPIO.output(7, True)
         self.pwm.ChangeDutyCycle(duty)
@@ -23,19 +24,25 @@ class Servo:
         self.pwm = None
         GPIO.cleanup()
         print('deactivated')
-    
+
     def activate(self):
-        self.start()
-        self.setAngle(65)
-        self.setAngle(155)
-        self.setAngle(65)
-        print('done')
-        self.deactive()
+        if not self.active:
+            self.active = True
+            self.start()
+            self.set_angle(65)
+            self.set_angle(155)
+            self.set_angle(65)
+            print('done')
+            self.deactive()
+            self.active = False
 
     def start(self):
         print('starting')
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
         GPIO.setup(7, GPIO.OUT)
-        self.pwm=GPIO.PWM(7,100)
+        self.pwm = GPIO.PWM(7, 100)
         self.pwm.start(0)
+
+    def is_active(self) -> bool:
+        return self.active
