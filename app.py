@@ -42,7 +42,7 @@ def on_close(ws):
 
 def on_open(ws):
     def run():
-        ws.send('{"t":1,"d":{"topic":"servo"}}')
+        ws.send('{"t":1,"d":{"topic":"iot"}}')
 
     threading.Thread(target=run).start()
     threading.Thread(target=send_ultra_info , daemon=True).start()
@@ -54,16 +54,16 @@ def send_ultra_info():
             if not servo.is_active():
                 ultra.start()
                 distance = ultra.get_distance()
-                ws.send('{"t":7,"d":{"topic":"servo","event":"measure","data":{"distance":' + str(distance) + '}}}')
+                ws.send('{"t":7,"d":{"topic":"iot","event":"measure","data":{"distance":' + str(distance) + '}}}')
         except RuntimeError:
             pass
 
 
 def activate_servo():
-    ws.send('{"t":7,"d":{"topic":"servo","event":"message","data":{"servo_active":true}}}')
+    ws.send('{"t":7,"d":{"topic":"iot","event":"message","data":{"servo_active":true}}}')
     servo.activate()
     servo.start()
-    ws.send('{"t":7,"d":{"topic":"servo","event":"message","data":{"servo_active":false}}}')
+    ws.send('{"t":7,"d":{"topic":"iot","event":"message","data":{"servo_active":false}}}')
 
 
 if __name__ == "__main__":
