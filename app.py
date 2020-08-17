@@ -1,13 +1,16 @@
 import sys
-from threading import Thread
+import time
+import threading
 import Servo
 import websocket
 import netifaces as ni
 import json
 import pprint
+import Ultrasonic
 
 pp = pprint.PrettyPrinter(indent=4)
 servo = Servo.Servo()
+ultra = Ultrasonic.Ultrasonic()
 
 try:
     import thread
@@ -23,25 +26,11 @@ def on_message(ws, message):
     event = _message['d']['event']
 
     if event == 'start_servo':
-        print(1)
-        t = Thread(target=activate_servo(), daemon=True)
-        t.start()
+        # print(1)
+        activate_servo()
 
 
-#    try:
-#
-#        _message = json.loads(message)
-#        
-#        event = _message['d']['event']
-#
-#        if event == 'start_servo':
-#            print(1)
-#            t = Thread(target=servo.activate(),daemon=True)
-#            t.start()
-#
-#    except: 
-#        print('Error')
-
+#    try:##        _message = json.loads(message)#        #        event = _message['d']['event']##        if event == 'start_servo':#            print(1)#            t = Thread(target=servo.activate(),daemon=True)#            t.start()##    except: #        print('Error')
 
 def on_error(ws, error):
     print(error)
@@ -55,14 +44,26 @@ def on_open(ws):
     def run():
         ws.send('{"t":1,"d":{"topic":"servo"}}')
 
-    Thread(target=run).start()
+    threading.Thread(target=run).start()
+    threading.Thread(target=send_ultra_info , daemon=True).start()
+
+
+def send_ultra_info():
+    while True:
+        try:
+            if not servo.is_active():
+                ultra.start()
+                distance = ultra.get_distance()
+                ws.send('{"t":7,"d":{"topic":"servo","event":"measure","data":{"distance":' + str(distance) + '}}}')
+        except RuntimeError:
+            pass
 
 
 def activate_servo():
+    ws.send('{"t":7,"d":{"topic":"servo","event":"message","data":{"servo_active":true}}}')
     servo.activate()
-    while servo.is_active():
-        ws.send('{"t":7,"d":{"topic":"servo","event":"message","data":' + str(servo.is_active()) + '}}')
-        pp.pprint(str(servo.is_active()))
+    servo.start()
+    ws.send('{"t":7,"d":{"topic":"servo","event":"message","data":{"servo_active":false}}}')
 
 
 if __name__ == "__main__":
