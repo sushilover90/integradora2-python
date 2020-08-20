@@ -1,11 +1,12 @@
-import sys
-import time
-import threading
-import Servo
-import websocket
-import netifaces as ni
 import json
 import pprint
+import sys
+import threading
+
+import netifaces as ni
+import websocket
+
+import Servo
 import Ultrasonic
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -72,12 +73,16 @@ if __name__ == "__main__":
     ip = ni.ifaddresses('wlan0')[ni.AF_INET][0]['addr']
     pp.pprint(ip)
     websocket.enableTrace(True)
-    ws_server_url = f'ws://{ip}:3333/adonis-ws'
+    ip = '165.227.23.126'
+    ws_server_url = f'ws://{ip}:8888/adonis-ws'
     ws = websocket.WebSocketApp(ws_server_url, on_message=on_message, on_error=on_error, on_close=on_close)
 
     try:
         while True:
-            ws.on_open = on_open
-            ws.run_forever()
+            try:
+                ws.on_open = on_open
+                ws.run_forever()
+            except KeyboardInterrupt:
+                sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)
